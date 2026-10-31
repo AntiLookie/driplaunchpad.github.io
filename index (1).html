@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drip — Memecoin Launchpad</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/@solana/web3.js@1.95.4/lib/index.iife.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ocean: {
+              50:  '#f0f7fa',
+              100: '#d9eef5',
+              200: '#b3dce9',
+              300: '#7ec2d6',
+              400: '#4aa3bc',
+              500: '#2f87a3',
+              600: '#266d87',
+              700: '#23596f',
+              800: '#224a5c',
+              900: '#1f3f4e',
+              950: '#122937',
+            },
+            drip: {
+              gray: '#8b9cad',
+              mist: '#c5d4de',
+              deep: '#0d1f2d',
+              foam: '#e8f4f8',
+              accent: '#3db8d9',
+            }
+          },
+          fontFamily: {
+            sans: ['Outfit', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'glow': '0 0 40px -10px rgba(61, 184, 217, 0.35)',
+            'card': '0 8px 32px -8px rgba(13, 31, 45, 0.4)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-deep: #0d1f2d;
+      --bg-mid: #122937;
+      --accent: #3db8d9;
+    }
+    body {
+      background: #0d1f2d;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    /* Animated ocean wave background */
+    .ocean-waves {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: linear-gradient(180deg, #0a1824 0%, #0d1f2d 30%, #122937 60%, #0d1f2d 100%);
+    }
+    .ocean-waves .wave-layer {
+      position: absolute;
+      left: 0;
+      width: 200%;
+      height: 40%;
+      bottom: -5%;
+      background-repeat: repeat-x;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+    .ocean-waves .wave-1 {
+      bottom: 0;
+      height: 45%;
+      opacity: 0.35;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'%3E%3Cpath fill='%231a4558' d='M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,138.7C672,128,768,160,864,176C960,192,1056,192,1152,170.7C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+      background-size: 50% 100%;
+      animation: wave-move 12s linear infinite;
+    }
+    .ocean-waves .wave-2 {
+      bottom: 8%;
+      height: 38%;
+      opacity: 0.28;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'%3E%3Cpath fill='%23266d87' d='M0,224L48,208C96,192,192,160,288,165.3C384,171,480,213,576,218.7C672,224,768,192,864,170.7C960,149,1056,139,1152,149.3C1248,160,1344,192,1392,208L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+      background-size: 50% 100%;
+      animation: wave-move 18s linear infinite reverse;
+    }
+    .ocean-waves .wave-3 {
+      bottom: 15%;
+      height: 32%;
+      opacity: 0.2;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'%3E%3Cpath fill='%233db8d9' d='M0,96L48,112C96,128,192,160,288,165.3C384,171,480,149,576,128C672,107,768,85,864,96C960,107,1056,149,1152,154.7C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+      background-size: 50% 100%;
+      animation: wave-move 22s linear infinite;
+    }
+    .ocean-waves .wave-4 {
+      bottom: -2%;
+      height: 25%;
+      opacity: 0.15;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320' preserveAspectRatio='none'%3E%3Cpath fill='%234aa3bc' d='M0,256L48,240C96,224,192,192,288,186.7C384,181,480,203,576,213.3C672,224,768,224,864,208C960,192,1056,160,1152,154.7C1248,149,1344,171,1392,182.7L1440,194L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+      background-size: 50% 100%;
+      animation: wave-move 15s linear infinite reverse;
+    }
+    @keyframes wave-move {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    /* Soft light rays over waves */
+    .ocean-waves::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(61, 184, 217, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 20%, rgba(47, 135, 163, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .page-content {
+      position: relative;
+      z-index: 1;
+    }
+    .glass {
+      background: rgba(34, 74, 92, 0.4);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(126, 194, 214, 0.15);
+    }
+    .glass-strong {
+      background: rgba(34, 74, 92, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(126, 194, 214, 0.22);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3db8d9 0%, #2f87a3 100%);
+      transition: all 0.25s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px -6px rgba(61, 184, 217, 0.5);
+    }
+    .btn-outline {
+      border: 1px solid rgba(61, 184, 217, 0.45);
+      transition: all 0.25s ease;
+    }
+    .btn-outline:hover {
+      background: rgba(61, 184, 217, 0.12);
+      border-color: rgba(61, 184, 217, 0.7);
+    }
+    .token-card {
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .token-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px -12px rgba(61, 184, 217, 0.25);
+    }
+    .wave-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      opacity: 0.08;
+    }
+    .wave-bg svg {
+      position: absolute;
+      bottom: 0;
+      width: 200%;
+      animation: wave-move 18s linear infinite;
+    }
+    .stat-up { color: #34d399; }
+    .stat-down { color: #f87171; }
+    .modal-backdrop {
+      background: rgba(13, 31, 45, 0.75);
+      backdrop-filter: blur(8px);
+    }
+    .chart-container {
+      position: relative;
+      height: 120px;
+    }
+    .live-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    /* Logo D with drip */
+    /* Logo wordmark: Drip + drips */
+    .logo-mark {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.15rem;
+      padding: 0.4rem 0.75rem 0.45rem;
+      border-radius: 0.85rem;
+      background: linear-gradient(135deg, #0e7490 0%, #0891b2 40%, #06b6d4 70%, #22d3ee 100%);
+      box-shadow:
+        0 0 0 1px rgba(165, 243, 252, 0.3),
+        0 0 32px -2px rgba(34, 211, 238, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      overflow: visible;
+    }
+    .logo-mark::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .logo-mark .logo-text {
+      position: relative;
+      font-weight: 800;
+      font-size: 1.1rem;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      background: linear-gradient(180deg, #ffffff 0%, #ecfeff 30%, #a5f3fc 65%, #67e8f9 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 1px 2px rgba(8, 47, 73, 0.5));
+    }
+    .logo-mark .drip-drop {
+      position: absolute;
+      width: 6px;
+      height: 8px;
+      background: linear-gradient(180deg, #a5f3fc 0%, #22d3ee 50%, #06b6d4 100%);
+      border-radius: 50% 50% 50% 50% / 35% 35% 65% 65%;
+      box-shadow: 0 0 8px rgba(34, 211, 238, 0.8);
+      animation: drip-fall 2.4s ease-in-out infinite;
+      opacity: 0.95;
+      z-index: 2;
+    }
+    .logo-mark .drip-drop:nth-child(2) {
+      left: 18%;
+      top: 86%;
+      animation-delay: 0s;
+    }
+    .logo-mark .drip-drop:nth-child(3) {
+      left: 48%;
+      top: 90%;
+      width: 5px;
+      height: 7px;
+      animation-delay: 0.7s;
+    }
+    .logo-mark .drip-drop:nth-child(4) {
+      left: 74%;
+      top: 85%;
+      width: 4.5px;
+      height: 6.5px;
+      animation-delay: 1.4s;
+    }
+    @keyframes drip-fall {
+      0% { transform: translateY(0) scale(1); opacity: 0.95; }
+      55% { transform: translateY(7px) scale(0.92); opacity: 0.75; }
+      100% { transform: translateY(14px) scale(0.5); opacity: 0; }
+    }
+    .logo-mark-sm {
+      padding: 0.28rem 0.55rem 0.32rem;
+      border-radius: 0.6rem;
+      box-shadow:
+        0 0 0 1px rgba(165, 243, 252, 0.25),
+        0 0 18px -2px rgba(34, 211, 238, 0.45);
+    }
+    .logo-mark-sm .logo-text {
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+    }
+    .logo-mark-sm .drip-drop {
+      display: none;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #122937; }
+    ::-webkit-scrollbar-thumb { background: #2f87a3; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3db8d9; }
+  </style>
+</head>
+<body class="font-sans text-ocean-100 antialiased">
+  <!-- Animated wave background -->
+  <div class="ocean-waves" aria-hidden="true">
+    <div class="wave-layer wave-1"></div>
+    <div class="wave-layer wave-2"></div>
+    <div class="wave-layer wave-3"></div>
+    <div class="wave-layer wave-4"></div>
+  </div>
+
+  <div class="page-content">
+  <!-- Navbar -->
+  <nav class="fixed top-0 inset-x-0 z-50 glass-strong">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center gap-2">
+          <div class="logo-mark" title="Drip">
+            <span class="logo-text">Drip</span>
+            <i class="drip-drop"></i>
+            <i class="drip-drop"></i>
+            <i class="drip-drop"></i>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center gap-8 text-sm font-medium text-ocean-200">
+          <a href="#tokens" class="hover:text-white transition">Tokens</a>
+          <a href="#live" class="hover:text-white transition">Live Token</a>
+          <a href="#market" class="hover:text-white transition">Market</a>
+          <a href="#launch" class="hover:text-white transition">Launch</a>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="launchBtn" class="btn-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hidden sm:inline-flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Launch Token
+          </button>
+          <button id="walletBtn" class="btn-outline text-ocean-100 text-sm font-semibold px-4 py-2 rounded-lg inline-flex items-center gap-2">
+            <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+            <span id="walletLabel">Connect Wallet</span>
+            <span id="walletBalance" class="hidden text-ocean-300 font-normal text-xs border-l border-ocean-600/50 pl-2 ml-0.5"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="relative pt-28 pb-16 sm:pt-36 sm:pb-24 overflow-hidden">
+    <div class="wave-bg">
+      <svg viewBox="0 0 1440 320" preserveAspectRatio="none">
+        <path fill="#3db8d9" d="M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,144C960,128,1056,128,1152,149.3C1248,171,1344,213,1392,234.7L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+      </svg>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs font-medium text-ocean-300 mb-6">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 live-pulse"></span>
+          Live on Solana · Real on-chain minting
+        </div>
+        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
+          Launch memecoins<br />
+          <span class="bg-gradient-to-r from-ocean-300 via-drip-accent to-ocean-400 bg-clip-text text-transparent">into the deep</span>
+        </h1>
+        <p class="mt-5 text-lg text-ocean-200/90 max-w-xl leading-relaxed">
+          Drip is a simple, ocean-cool launchpad. Create a token in seconds, pair it with any asset, and ride the wave with real-time charts and market stats.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-4">
+          <button id="heroLaunchBtn" class="btn-primary text-white font-semibold px-6 py-3 rounded-xl text-base inline-flex items-center gap-2 shadow-glow">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Launch a Token
+          </button>
+          <a href="#tokens" class="btn-outline text-ocean-100 font-semibold px-6 py-3 rounded-xl text-base inline-flex items-center gap-2">
+            Explore Tokens
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Market Stats Strip -->
+  <section id="market" class="relative -mt-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div class="glass rounded-2xl p-4 sm:p-5">
+          <p class="text-xs text-ocean-400 font-medium uppercase tracking-wider">Total Volume (24h)</p>
+          <p class="mt-1 text-xl sm:text-2xl font-bold text-white" id="statVolume">$4.28M</p>
+          <p class="mt-1 text-xs stat-up">+18.4%</p>
+        </div>
+        <div class="glass rounded-2xl p-4 sm:p-5">
+          <p class="text-xs text-ocean-400 font-medium uppercase tracking-wider">Tokens Launched</p>
+          <p class="mt-1 text-xl sm:text-2xl font-bold text-white" id="statTokens">1,284</p>
+          <p class="mt-1 text-xs text-ocean-300">+42 today</p>
+        </div>
+        <div class="glass rounded-2xl p-4 sm:p-5">
+          <p class="text-xs text-ocean-400 font-medium uppercase tracking-wider">Active Traders</p>
+          <p class="mt-1 text-xl sm:text-2xl font-bold text-white" id="statTraders">8,912</p>
+          <p class="mt-1 text-xs stat-up">+6.2%</p>
+        </div>
+        <div class="glass rounded-2xl p-4 sm:p-5">
+          <p class="text-xs text-ocean-400 font-medium uppercase tracking-wider">Liquidity Locked</p>
+          <p class="mt-1 text-xl sm:text-2xl font-bold text-white" id="statLiq">$12.6M</p>
+          <p class="mt-1 text-xs text-ocean-300">Across all pairs</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Token Section -->
+  <section id="live" class="py-16 sm:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-end justify-between mb-8">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-bold text-white">Live Token</h2>
+          <p class="mt-1 text-ocean-300 text-sm">Featured launch currently trading on Drip</p>
+        </div>
+        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 live-pulse"></span>
+          Live
+        </span>
+      </div>
+
+      <div class="glass-strong rounded-3xl p-6 sm:p-8 shadow-card">
+        <div class="flex flex-col lg:flex-row gap-8">
+          <!-- Token info -->
+          <div class="lg:w-2/5 space-y-6">
+            <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-2xl font-bold text-white shadow-glow">
+                💧
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white">Ocean Drip</h3>
+                <p class="text-ocean-300 text-sm">$DRIP · Pairable with any token</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs text-ocean-400 uppercase tracking-wider">Price</p>
+                <p class="text-2xl font-bold text-white mt-0.5">$0.00482</p>
+              </div>
+              <div>
+                <p class="text-xs text-ocean-400 uppercase tracking-wider">24h Change</p>
+                <p class="text-2xl font-bold stat-up mt-0.5">+124.7%</p>
+              </div>
+              <div>
+                <p class="text-xs text-ocean-400 uppercase tracking-wider">Market Cap</p>
+                <p class="text-lg font-semibold text-white mt-0.5">$4.82M</p>
+              </div>
+              <div>
+                <p class="text-xs text-ocean-400 uppercase tracking-wider">24h Volume</p>
+                <p class="text-lg font-semibold text-white mt-0.5">$1.12M</p>
+              </div>
+              <div>
+                <p class="text-xs text-ocean-400 uppercase tracking-wider">Holders</p>
+                <p class="text-lg font-semibold text-white mt-0.5">3,418</p>
+              </div>
+              <div>
+                <p class="text-xs text-ocean-400 uppercase tracking-wider">Liquidity</p>
+                <p class="text-lg font-semibold text-white mt-0.5">$890K</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+              <span class="text-xs px-2.5 py-1 rounded-lg bg-ocean-800/60 text-ocean-200 border border-ocean-600/40">Pairable with SOL</span>
+              <span class="text-xs px-2.5 py-1 rounded-lg bg-ocean-800/60 text-ocean-200 border border-ocean-600/40">Pairable with USDC</span>
+              <span class="text-xs px-2.5 py-1 rounded-lg bg-ocean-800/60 text-ocean-200 border border-ocean-600/40">Any token</span>
+            </div>
+
+            <div class="flex gap-3">
+              <button class="btn-primary flex-1 text-white font-semibold py-2.5 rounded-xl text-sm">Trade</button>
+              <button class="btn-outline flex-1 text-ocean-100 font-semibold py-2.5 rounded-xl text-sm">Add Liquidity</button>
+            </div>
+          </div>
+
+          <!-- Chart -->
+          <div class="lg:w-3/5">
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-sm font-medium text-ocean-300">Price (24h)</p>
+              <div class="flex gap-1">
+                <button class="chart-range active text-xs px-2.5 py-1 rounded-md bg-ocean-600/50 text-white" data-range="1H">1H</button>
+                <button class="chart-range text-xs px-2.5 py-1 rounded-md text-ocean-300 hover:bg-ocean-700/40" data-range="24H">24H</button>
+                <button class="chart-range text-xs px-2.5 py-1 rounded-md text-ocean-300 hover:bg-ocean-700/40" data-range="7D">7D</button>
+              </div>
+            </div>
+            <div class="chart-container h-56 sm:h-64">
+              <canvas id="liveChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Created Tokens -->
+  <section id="tokens" class="py-12 sm:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div>
+          <h2 class="text-2xl sm:text-3xl font-bold text-white">Tokens on Drip</h2>
+          <p class="mt-1 text-ocean-300 text-sm">All launches are pairable with any other token</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="filter-btn active text-xs font-medium px-3 py-1.5 rounded-lg bg-ocean-600/50 text-white" data-filter="all">All</button>
+          <button class="filter-btn text-xs font-medium px-3 py-1.5 rounded-lg text-ocean-300 hover:bg-ocean-700/40" data-filter="hot">Hot</button>
+          <button class="filter-btn text-xs font-medium px-3 py-1.5 rounded-lg text-ocean-300 hover:bg-ocean-700/40" data-filter="new">New</button>
+        </div>
+      </div>
+
+      <div id="tokenGrid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+        <!-- Token cards injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Launch CTA -->
+  <section id="launch" class="py-16 sm:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="glass-strong rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 pointer-events-none">
+          <div class="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-drip-accent blur-3xl"></div>
+          <div class="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-ocean-500 blur-3xl"></div>
+        </div>
+        <div class="relative">
+          <h2 class="text-2xl sm:text-3xl font-bold text-white">Ready to launch?</h2>
+          <p class="mt-3 text-ocean-200 max-w-lg mx-auto">
+            Create a memecoin in under a minute. Instant liquidity pairs with SOL, USDC, or any token you choose.
+          </p>
+          <button id="ctaLaunchBtn" class="mt-8 btn-primary text-white font-semibold px-8 py-3.5 rounded-xl text-base inline-flex items-center gap-2 shadow-glow">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Launch Token
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-ocean-800/50 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <div class="logo-mark logo-mark-sm" title="Drip">
+            <span class="logo-text">Drip</span>
+          </div>
+          <span class="text-ocean-400 text-sm">· Memecoin Launchpad</span>
+        </div>
+        <p class="text-ocean-400 text-sm">© 2026 Drip. Built for the ocean of crypto.</p>
+      </div>
+    </div>
+  </footer>
+  </div><!-- /.page-content -->
+
+  <!-- Launch Modal -->
+  <div id="launchModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div class="modal-backdrop absolute inset-0" id="modalBackdrop"></div>
+    <div class="relative glass-strong rounded-2xl w-full max-w-md p-6 sm:p-8 shadow-2xl">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-white">Launch a Token</h3>
+        <button id="closeModal" class="text-ocean-300 hover:text-white transition p-1">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form id="launchForm" class="space-y-4">
+        <div class="flex items-center justify-between gap-3 p-3 rounded-xl bg-ocean-950/40 border border-ocean-700/40">
+          <div>
+            <p class="text-xs font-medium text-ocean-300">Network</p>
+            <p class="text-[11px] text-ocean-400 mt-0.5" id="networkHint">Devnet — free test SOL</p>
+          </div>
+          <select id="networkSelect" name="network" class="bg-ocean-900 border border-ocean-600/50 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-drip-accent/60">
+            <option value="devnet" selected>Devnet</option>
+            <option value="mainnet-beta">Mainnet</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-ocean-300 mb-1.5">Token Name</label>
+          <input type="text" name="name" required maxlength="32" placeholder="e.g. Coral Reef" class="w-full bg-ocean-950/50 border border-ocean-700/50 rounded-xl px-4 py-2.5 text-white placeholder-ocean-500 focus:outline-none focus:border-drip-accent/60 transition" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-ocean-300 mb-1.5">Symbol</label>
+          <input type="text" name="symbol" required maxlength="10" placeholder="e.g. CORAL" class="w-full bg-ocean-950/50 border border-ocean-700/50 rounded-xl px-4 py-2.5 text-white placeholder-ocean-500 focus:outline-none focus:border-drip-accent/60 transition uppercase" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-ocean-300 mb-1.5">Total Supply</label>
+            <input type="number" name="supply" required min="1" value="1000000000" class="w-full bg-ocean-950/50 border border-ocean-700/50 rounded-xl px-4 py-2.5 text-white placeholder-ocean-500 focus:outline-none focus:border-drip-accent/60 transition" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-ocean-300 mb-1.5">Decimals</label>
+            <select name="decimals" class="w-full bg-ocean-950/50 border border-ocean-700/50 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-drip-accent/60 transition">
+              <option value="6" selected>6</option>
+              <option value="9">9</option>
+              <option value="0">0</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-ocean-300 mb-1.5">Pair with</label>
+          <select name="pair" class="w-full bg-ocean-950/50 border border-ocean-700/50 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-drip-accent/60 transition">
+            <option value="SOL">SOL</option>
+            <option value="USDC">USDC</option>
+            <option value="USDT">USDT</option>
+            <option value="ANY">Any token (custom)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-ocean-300 mb-1.5">Description (optional)</label>
+          <textarea name="desc" rows="2" maxlength="200" placeholder="A short vibe for your coin..." class="w-full bg-ocean-950/50 border border-ocean-700/50 rounded-xl px-4 py-2.5 text-white placeholder-ocean-500 focus:outline-none focus:border-drip-accent/60 transition resize-none"></textarea>
+        </div>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" name="revokeMint" checked class="rounded border-ocean-600 bg-ocean-950 text-drip-accent focus:ring-drip-accent" />
+          <span class="text-xs text-ocean-300">Revoke mint authority (fixed supply)</span>
+        </label>
+        <p class="text-[11px] text-ocean-400 leading-relaxed">
+          Creates a real SPL token on-chain. You pay network fees (~0.01–0.02 SOL). Metadata name &amp; symbol are set via Metaplex.
+        </p>
+        <button type="submit" id="launchSubmitBtn" class="w-full btn-primary text-white font-semibold py-3 rounded-xl mt-1 disabled:opacity-60 disabled:cursor-not-allowed">
+          Create &amp; Launch On-Chain
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-[110] hidden">
+    <div class="glass-strong rounded-xl px-5 py-3 shadow-card flex items-center gap-3">
+      <span class="text-emerald-400 text-lg">✓</span>
+      <p id="toastMsg" class="text-sm text-white font-medium"></p>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Mock Data ----------
+    const tokens = [
+      {
+        id: 1,
+        name: "Wave Rider",
+        symbol: "WAVE",
+        emoji: "🌊",
+        price: 0.00124,
+        change: 87.3,
+        mcap: 1240000,
+        volume: 312000,
+        holders: 2140,
+        pair: "SOL",
+        hot: true,
+        new: false,
+        history: [0.0004, 0.0005, 0.0007, 0.0009, 0.0011, 0.0010, 0.0013, 0.0012, 0.00124]
+      },
+      {
+        id: 2,
+        name: "Deep Blue",
+        symbol: "DEEP",
+        emoji: "🐋",
+        price: 0.00087,
+        change: -12.4,
+        mcap: 870000,
+        volume: 189000,
+        holders: 1560,
+        pair: "USDC",
+        hot: false,
+        new: true,
+        history: [0.0011, 0.0010, 0.00095, 0.0009, 0.00085, 0.00088, 0.00082, 0.0009, 0.00087]
+      },
+      {
+        id: 3,
+        name: "Foam Party",
+        symbol: "FOAM",
+        emoji: "🫧",
+        price: 0.00341,
+        change: 214.8,
+        mcap: 3410000,
+        volume: 890000,
+        holders: 4890,
+        pair: "SOL",
+        hot: true,
+        new: false,
+        history: [0.0008, 0.0012, 0.0015, 0.0020, 0.0025, 0.0028, 0.0031, 0.0033, 0.00341]
+      },
+      {
+        id: 4,
+        name: "Tide Coin",
+        symbol: "TIDE",
+        emoji: "🌙",
+        price: 0.00052,
+        change: 34.1,
+        mcap: 520000,
+        volume: 98000,
+        holders: 890,
+        pair: "ANY",
+        hot: false,
+        new: true,
+        history: [0.0003, 0.00035, 0.0004, 0.00042, 0.00048, 0.0005, 0.00049, 0.00051, 0.00052]
+      },
+      {
+        id: 5,
+        name: "Coral Cash",
+        symbol: "CORAL",
+        emoji: "🪸",
+        price: 0.00198,
+        change: -5.6,
+        mcap: 1980000,
+        volume: 245000,
+        holders: 3012,
+        pair: "USDC",
+        hot: true,
+        new: false,
+        history: [0.0022, 0.0021, 0.0020, 0.00195, 0.0019, 0.0020, 0.00197, 0.0020, 0.00198]
+      },
+      {
+        id: 6,
+        name: "Salt Life",
+        symbol: "SALT",
+        emoji: "🧂",
+        price: 0.00031,
+        change: 56.2,
+        mcap: 310000,
+        volume: 67000,
+        holders: 720,
+        pair: "SOL",
+        hot: false,
+        new: true,
+        history: [0.00015, 0.00018, 0.0002, 0.00022, 0.00025, 0.00028, 0.0003, 0.00029, 0.00031]
+      }
+    ];
+
+    // ---------- Helpers ----------
+    function formatPrice(p) {
+      if (p < 0.001) return '$' + p.toFixed(6);
+      if (p < 0.01) return '$' + p.toFixed(5);
+      return '$' + p.toFixed(4);
+    }
+    function formatNum(n) {
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+      return n.toString();
+    }
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 3200);
+    }
+
+    // ---------- Solana Constants & Programs ----------
+    const {
+      Connection, PublicKey, clusterApiUrl, LAMPORTS_PER_SOL,
+      Keypair, SystemProgram, Transaction, TransactionInstruction,
+      SYSVAR_RENT_PUBKEY
+    } = solanaWeb3;
+
+    const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+    const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+    const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+    const MINT_SIZE = 82;
+    const AUTHORITY_MINT_TOKENS = 0;
+
+    let currentNetwork = 'devnet';
+    let connection = new Connection(clusterApiUrl(currentNetwork), 'confirmed');
+
+    let walletProvider = null;
+    let publicKey = null;
+
+    const walletBtn = document.getElementById('walletBtn');
+    const walletLabel = document.getElementById('walletLabel');
+    const walletBalanceEl = document.getElementById('walletBalance');
+    const networkSelect = document.getElementById('networkSelect');
+    const networkHint = document.getElementById('networkHint');
+
+    function truncateAddress(addr) {
+      if (!addr) return '';
+      return addr.slice(0, 4) + '…' + addr.slice(-4);
+    }
+
+    function explorerTx(sig) {
+      const cluster = currentNetwork === 'mainnet-beta' ? '' : `?cluster=${currentNetwork}`;
+      return `https://solscan.io/tx/${sig}${cluster}`;
+    }
+    function explorerToken(mint) {
+      const cluster = currentNetwork === 'mainnet-beta' ? '' : `?cluster=${currentNetwork}`;
+      return `https://solscan.io/token/${mint}${cluster}`;
+    }
+
+    function getProvider() {
+      if (window.solana?.isPhantom) return window.solana;
+      if (window.solflare?.isSolflare) return window.solflare;
+      if (window.backpack?.isBackpack) return window.backpack;
+      if (window.solana) return window.solana;
+      return null;
+    }
+
+    function setNetwork(net) {
+      currentNetwork = net;
+      connection = new Connection(clusterApiUrl(net), 'confirmed');
+      networkHint.textContent = net === 'devnet'
+        ? 'Devnet — switch wallet to Devnet · faucet.solana.com'
+        : 'Mainnet — real SOL required for fees';
+      if (publicKey) fetchBalance(publicKey).then(bal => {
+        if (bal !== null) {
+          walletBalanceEl.textContent = bal + ' SOL';
+          walletBalanceEl.classList.remove('hidden');
+        }
+      });
+    }
+
+    networkSelect.addEventListener('change', (e) => setNetwork(e.target.value));
+
+    async function fetchBalance(pubkey) {
+      try {
+        const lamports = await connection.getBalance(new PublicKey(pubkey));
+        const sol = lamports / LAMPORTS_PER_SOL;
+        return sol < 0.01 ? sol.toFixed(4) : sol.toFixed(2);
+      } catch {
+        return null;
+      }
+    }
+
+    async function setConnectedUI(pubkeyStr) {
+      publicKey = pubkeyStr;
+      walletLabel.textContent = truncateAddress(pubkeyStr);
+      walletBtn.classList.add('border-emerald-500/50');
+      const bal = await fetchBalance(pubkeyStr);
+      if (bal !== null) {
+        walletBalanceEl.textContent = bal + ' SOL';
+        walletBalanceEl.classList.remove('hidden');
+      }
+    }
+
+    function setDisconnectedUI() {
+      publicKey = null;
+      walletProvider = null;
+      walletLabel.textContent = 'Connect Wallet';
+      walletBtn.classList.remove('border-emerald-500/50');
+      walletBalanceEl.classList.add('hidden');
+      walletBalanceEl.textContent = '';
+    }
+
+    async function connectWallet() {
+      const provider = getProvider();
+      if (!provider) {
+        showToast('No Solana wallet found. Install Phantom or Solflare.');
+        window.open('https://phantom.app/', '_blank');
+        return;
+      }
+      try {
+        walletProvider = provider;
+        const resp = await provider.connect();
+        const key = (resp.publicKey || provider.publicKey).toString();
+        await setConnectedUI(key);
+        showToast('Wallet connected');
+        provider.on?.('accountChanged', async (pk) => {
+          if (pk) {
+            await setConnectedUI(pk.toString());
+            showToast('Account switched');
+          } else {
+            setDisconnectedUI();
+            showToast('Wallet disconnected');
+          }
+        });
+        provider.on?.('disconnect', () => {
+          setDisconnectedUI();
+          showToast('Wallet disconnected');
+        });
+      } catch (err) {
+        if (err?.code === 4001 || err?.message?.includes('User rejected')) {
+          showToast('Connection rejected');
+        } else {
+          console.error(err);
+          showToast('Failed to connect wallet');
+        }
+      }
+    }
+
+    async function disconnectWallet() {
+      try {
+        if (walletProvider?.disconnect) await walletProvider.disconnect();
+      } catch (_) {}
+      setDisconnectedUI();
+      showToast('Wallet disconnected');
+    }
+
+    walletBtn.addEventListener('click', async () => {
+      if (publicKey) await disconnectWallet();
+      else await connectWallet();
+    });
+
+    (async () => {
+      const provider = getProvider();
+      if (provider?.isConnected && provider.publicKey) {
+        walletProvider = provider;
+        await setConnectedUI(provider.publicKey.toString());
+      }
+    })();
+
+    // ---------- SPL Token Helpers ----------
+    async function getAssociatedTokenAddress(mint, owner) {
+      const [ata] = await PublicKey.findProgramAddress(
+        [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      return ata;
+    }
+
+    function createInitializeMintIx(mint, decimals, mintAuthority, freezeAuthority) {
+      const keys = [
+        { pubkey: mint, isSigner: false, isWritable: true },
+        { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+      ];
+      const data = new Uint8Array(67);
+      data[0] = 0; // InitializeMint
+      data[1] = decimals;
+      data.set(mintAuthority.toBytes(), 2);
+      data[34] = freezeAuthority ? 1 : 0;
+      if (freezeAuthority) data.set(freezeAuthority.toBytes(), 35);
+      return new TransactionInstruction({ keys, programId: TOKEN_PROGRAM_ID, data });
+    }
+
+    function createAssociatedTokenAccountIx(payer, ata, owner, mint) {
+      return new TransactionInstruction({
+        keys: [
+          { pubkey: payer, isSigner: true, isWritable: true },
+          { pubkey: ata, isSigner: false, isWritable: true },
+          { pubkey: owner, isSigner: false, isWritable: false },
+          { pubkey: mint, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+        data: new Uint8Array(0),
+      });
+    }
+
+    function createMintToIx(mint, dest, authority, amount) {
+      const data = new Uint8Array(9);
+      data[0] = 7; // MintTo
+      const view = new DataView(data.buffer);
+      // amount as u64 little-endian
+      const low = Number(amount & 0xffffffffn);
+      const high = Number(amount >> 32n);
+      view.setUint32(1, low, true);
+      view.setUint32(5, high, true);
+      return new TransactionInstruction({
+        keys: [
+          { pubkey: mint, isSigner: false, isWritable: true },
+          { pubkey: dest, isSigner: false, isWritable: true },
+          { pubkey: authority, isSigner: true, isWritable: false },
+        ],
+        programId: TOKEN_PROGRAM_ID,
+        data,
+      });
+    }
+
+    function createSetAuthorityIx(account, currentAuth, authorityType, newAuth) {
+      const data = new Uint8Array(newAuth ? 35 : 3);
+      data[0] = 6; // SetAuthority
+      data[1] = authorityType;
+      data[2] = newAuth ? 1 : 0;
+      if (newAuth) data.set(newAuth.toBytes(), 3);
+      return new TransactionInstruction({
+        keys: [
+          { pubkey: account, isSigner: false, isWritable: true },
+          { pubkey: currentAuth, isSigner: true, isWritable: false },
+        ],
+        programId: TOKEN_PROGRAM_ID,
+        data,
+      });
+    }
+
+    async function getMetadataPDA(mint) {
+      const [pda] = await PublicKey.findProgramAddress(
+        [new TextEncoder().encode('metadata'), METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+        METADATA_PROGRAM_ID
+      );
+      return pda;
+    }
+
+    // Borsh-style helpers for Metaplex CreateMetadataAccountV3
+    function encodeString(str, maxLen) {
+      const encoded = new TextEncoder().encode(str.slice(0, maxLen));
+      const buf = new Uint8Array(4 + encoded.length);
+      new DataView(buf.buffer).setUint32(0, encoded.length, true);
+      buf.set(encoded, 4);
+      return buf;
+    }
+
+    function createMetadataV3Ix(metadata, mint, mintAuthority, payer, updateAuthority, name, symbol, uri) {
+      // CreateMetadataAccountV3 discriminator = 33
+      const nameB = encodeString(name, 32);
+      const symbolB = encodeString(symbol, 10);
+      const uriB = encodeString(uri || '', 200);
+
+      // DataV2: name, symbol, uri, sellerFeeBasisPoints (u16), creators option(None), collection None, uses None
+      // + isMutable bool + collectionDetails None
+      const parts = [
+        new Uint8Array([33]),           // instruction
+        nameB,
+        symbolB,
+        uriB,
+        new Uint8Array([0, 0]),         // seller_fee_basis_points = 0
+        new Uint8Array([0]),            // creators = None
+        new Uint8Array([0]),            // collection = None
+        new Uint8Array([0]),            // uses = None
+        new Uint8Array([1]),            // isMutable = true
+        new Uint8Array([0]),            // collectionDetails = None
+      ];
+      let total = 0;
+      parts.forEach(p => total += p.length);
+      const data = new Uint8Array(total);
+      let offset = 0;
+      parts.forEach(p => { data.set(p, offset); offset += p.length; });
+
+      return new TransactionInstruction({
+        keys: [
+          { pubkey: metadata, isSigner: false, isWritable: true },
+          { pubkey: mint, isSigner: false, isWritable: false },
+          { pubkey: mintAuthority, isSigner: true, isWritable: false },
+          { pubkey: payer, isSigner: true, isWritable: true },
+          { pubkey: updateAuthority, isSigner: false, isWritable: false },
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+          { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
+        ],
+        programId: METADATA_PROGRAM_ID,
+        data,
+      });
+    }
+
+    // ---------- On-chain Mint ----------
+    async function mintTokenOnChain({ name, symbol, supply, decimals, revokeMint, description }) {
+      const payer = new PublicKey(publicKey);
+      const mintKeypair = Keypair.generate();
+      const mint = mintKeypair.publicKey;
+      const ata = await getAssociatedTokenAddress(mint, payer);
+      const metadata = await getMetadataPDA(mint);
+
+      const lamports = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+      const amount = BigInt(supply) * (10n ** BigInt(decimals));
+
+      const tx = new Transaction();
+
+      // 1. Create mint account
+      tx.add(SystemProgram.createAccount({
+        fromPubkey: payer,
+        newAccountPubkey: mint,
+        space: MINT_SIZE,
+        lamports,
+        programId: TOKEN_PROGRAM_ID,
+      }));
+
+      // 2. Initialize mint (mint authority = user, no freeze)
+      tx.add(createInitializeMintIx(mint, decimals, payer, null));
+
+      // 3. Create ATA
+      tx.add(createAssociatedTokenAccountIx(payer, ata, payer, mint));
+
+      // 4. Mint full supply to user
+      tx.add(createMintToIx(mint, ata, payer, amount));
+
+      // 5. Metaplex metadata
+      const uri = ''; // can be a JSON metadata URL later
+      tx.add(createMetadataV3Ix(metadata, mint, payer, payer, payer, name, symbol, uri));
+
+      // 6. Optionally revoke mint authority (fixed supply)
+      if (revokeMint) {
+        tx.add(createSetAuthorityIx(mint, payer, AUTHORITY_MINT_TOKENS, null));
+      }
+
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = payer;
+
+      // Partial sign with mint keypair, then wallet signs
+      tx.partialSign(mintKeypair);
+
+      let signed;
+      if (walletProvider.signTransaction) {
+        signed = await walletProvider.signTransaction(tx);
+      } else {
+        // Fallback: some wallets only support signAndSend
+        const sig = await walletProvider.signAndSendTransaction(tx);
+        await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
+        return { mint: mint.toBase58(), signature: typeof sig === 'string' ? sig : sig.signature };
+      }
+
+      const signature = await connection.sendRawTransaction(signed.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+      await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+
+      return { mint: mint.toBase58(), signature };
+    }
+
+    // ---------- Modal ----------
+    const modal = document.getElementById('launchModal');
+    const launchSubmitBtn = document.getElementById('launchSubmitBtn');
+
+    function openModal() {
+      if (!publicKey) {
+        showToast('Connect your wallet first');
+        connectWallet();
+        return;
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    function closeModal() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    document.getElementById('launchBtn').addEventListener('click', openModal);
+    document.getElementById('heroLaunchBtn').addEventListener('click', openModal);
+    document.getElementById('ctaLaunchBtn').addEventListener('click', openModal);
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('modalBackdrop').addEventListener('click', closeModal);
+
+    document.getElementById('launchForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!publicKey || !walletProvider) {
+        showToast('Connect your wallet to launch');
+        return;
+      }
+
+      const fd = new FormData(e.target);
+      const name = (fd.get('name') || '').trim();
+      const symbol = (fd.get('symbol') || '').trim().toUpperCase();
+      const supply = parseInt(fd.get('supply'), 10);
+      const decimals = parseInt(fd.get('decimals'), 10);
+      const pair = fd.get('pair');
+      const description = (fd.get('desc') || '').trim();
+      const revokeMint = fd.get('revokeMint') === 'on';
+
+      if (!name || !symbol || !supply || supply < 1) {
+        showToast('Fill in name, symbol, and supply');
+        return;
+      }
+
+      launchSubmitBtn.disabled = true;
+      launchSubmitBtn.textContent = 'Minting on-chain…';
+      showToast('Approve the transaction in your wallet');
+
+      try {
+        const { mint, signature } = await mintTokenOnChain({
+          name, symbol, supply, decimals, revokeMint, description
+        });
+
+        const newToken = {
+          id: Date.now(),
+          name,
+          symbol,
+          emoji: '💧',
+          price: 0,
+          change: 0,
+          mcap: 0,
+          volume: 0,
+          holders: 1,
+          pair,
+          hot: false,
+          new: true,
+          mint,
+          signature,
+          network: currentNetwork,
+          history: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        };
+        tokens.unshift(newToken);
+        renderTokens(currentFilter);
+        closeModal();
+        e.target.reset();
+        networkSelect.value = currentNetwork;
+
+        showToast(`${symbol} minted! ${truncateAddress(mint)}`);
+        // Open explorer in new tab
+        window.open(explorerToken(mint), '_blank');
+
+        const el = document.getElementById('statTokens');
+        el.textContent = (parseInt(el.textContent.replace(/,/g, '')) + 1).toLocaleString();
+      } catch (err) {
+        console.error(err);
+        const msg = err?.message || String(err);
+        if (msg.includes('User rejected') || err?.code === 4001) {
+          showToast('Transaction rejected');
+        } else if (msg.includes('insufficient') || msg.includes('0x1')) {
+          showToast('Insufficient SOL for fees. Get devnet SOL from a faucet.');
+        } else {
+          showToast('Mint failed: ' + msg.slice(0, 80));
+        }
+      } finally {
+        launchSubmitBtn.disabled = false;
+        launchSubmitBtn.textContent = 'Create & Launch On-Chain';
+      }
+    });
+
+    // ---------- Token Cards ----------
+    let currentFilter = 'all';
+    const charts = {};
+
+    function renderTokens(filter = 'all') {
+      currentFilter = filter;
+      const grid = document.getElementById('tokenGrid');
+      // destroy old charts
+      Object.values(charts).forEach(c => c.destroy());
+      Object.keys(charts).forEach(k => delete charts[k]);
+
+      let list = tokens;
+      if (filter === 'hot') list = tokens.filter(t => t.hot);
+      if (filter === 'new') list = tokens.filter(t => t.new);
+
+      grid.innerHTML = list.map(t => {
+        const isOnChain = !!t.mint;
+        const mintShort = isOnChain ? truncateAddress(t.mint) : '';
+        const explorerUrl = isOnChain ? explorerToken(t.mint) : '#';
+        return `
+        <div class="token-card glass rounded-2xl p-5 flex flex-col">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-ocean-500 to-ocean-700 flex items-center justify-center text-xl">
+                ${t.emoji}
+              </div>
+              <div>
+                <h4 class="font-semibold text-white">${t.name}</h4>
+                <p class="text-xs text-ocean-400">$${t.symbol} · ${t.pair}${isOnChain ? ' · <span class="text-emerald-400/90">on-chain</span>' : ''}</p>
+              </div>
+            </div>
+            ${t.new ? '<span class="text-[10px] font-semibold uppercase tracking-wider text-drip-accent bg-drip-accent/10 px-2 py-0.5 rounded">New</span>' : ''}
+            ${t.hot && !t.new ? '<span class="text-[10px] font-semibold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded">Hot</span>' : ''}
+          </div>
+          <div class="chart-container mb-3">
+            <canvas id="chart-${t.id}"></canvas>
+          </div>
+          <div class="flex items-end justify-between mt-auto">
+            <div>
+              <p class="text-lg font-bold text-white">${isOnChain && t.price === 0 ? 'Just minted' : formatPrice(t.price)}</p>
+              <p class="text-xs ${t.change >= 0 ? 'stat-up' : 'stat-down'}">${isOnChain && t.price === 0 ? (t.network || 'devnet') : ((t.change >= 0 ? '+' : '') + t.change.toFixed(1) + '%')}</p>
+            </div>
+            <div class="text-right text-xs text-ocean-400 space-y-0.5">
+              ${isOnChain
+                ? `<p class="font-mono text-ocean-300">${mintShort}</p><a href="${explorerUrl}" target="_blank" rel="noopener" class="text-drip-accent hover:underline">View on Solscan ↗</a>`
+                : `<p>MC ${formatNum(t.mcap)}</p><p>Vol ${formatNum(t.volume)}</p>`}
+            </div>
+          </div>
+          <div class="mt-4 flex gap-2">
+            <button class="flex-1 btn-primary text-white text-xs font-semibold py-2 rounded-lg">Trade</button>
+            <button class="flex-1 btn-outline text-ocean-100 text-xs font-semibold py-2 rounded-lg">Pair</button>
+          </div>
+        </div>
+      `}).join('');
+
+      // init mini charts
+      list.forEach(t => {
+        const ctx = document.getElementById(`chart-${t.id}`);
+        if (!ctx) return;
+        const isUp = t.change >= 0;
+        charts[t.id] = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: t.history.map((_, i) => i),
+            datasets: [{
+              data: t.history,
+              borderColor: isUp ? '#34d399' : '#f87171',
+              backgroundColor: isUp ? 'rgba(52, 211, 153, 0.08)' : 'rgba(248, 113, 113, 0.08)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              x: { display: false },
+              y: { display: false }
+            },
+            interaction: { intersect: false }
+          }
+        });
+      });
+    }
+
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          b.classList.remove('active', 'bg-ocean-600/50', 'text-white');
+          b.classList.add('text-ocean-300');
+        });
+        btn.classList.add('active', 'bg-ocean-600/50', 'text-white');
+        btn.classList.remove('text-ocean-300');
+        renderTokens(btn.dataset.filter);
+      });
+    });
+
+    // ---------- Live Chart ----------
+    const liveCtx = document.getElementById('liveChart');
+    const liveData = {
+      '1H': [0.0038, 0.0039, 0.0040, 0.0041, 0.0040, 0.0042, 0.0043, 0.0045, 0.0046, 0.0047, 0.0048, 0.00482],
+      '24H': [0.0021, 0.0023, 0.0025, 0.0028, 0.0030, 0.0032, 0.0035, 0.0038, 0.0040, 0.0042, 0.0045, 0.00482],
+      '7D': [0.0012, 0.0015, 0.0018, 0.0020, 0.0024, 0.0028, 0.0032, 0.0036, 0.0040, 0.0043, 0.0046, 0.00482]
+    };
+    let liveChart = new Chart(liveCtx, {
+      type: 'line',
+      data: {
+        labels: Array(12).fill(''),
+        datasets: [{
+          data: liveData['24H'],
+          borderColor: '#3db8d9',
+          backgroundColor: 'rgba(61, 184, 217, 0.12)',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: '#3db8d9',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(13, 31, 45, 0.9)',
+            titleColor: '#7ec2d6',
+            bodyColor: '#fff',
+            borderColor: 'rgba(61, 184, 217, 0.3)',
+            borderWidth: 1,
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              label: ctx => formatPrice(ctx.parsed.y)
+            }
+          }
+        },
+        scales: {
+          x: { display: false },
+          y: {
+            display: true,
+            grid: { color: 'rgba(126, 194, 214, 0.08)' },
+            ticks: {
+              color: '#7ec2d6',
+              font: { size: 11 },
+              callback: v => formatPrice(v)
+            }
+          }
+        },
+        interaction: { mode: 'index', intersect: false }
+      }
+    });
+
+    document.querySelectorAll('.chart-range').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.chart-range').forEach(b => {
+          b.classList.remove('active', 'bg-ocean-600/50', 'text-white');
+          b.classList.add('text-ocean-300');
+        });
+        btn.classList.add('active', 'bg-ocean-600/50', 'text-white');
+        btn.classList.remove('text-ocean-300');
+        liveChart.data.datasets[0].data = liveData[btn.dataset.range];
+        liveChart.update();
+      });
+    });
+
+    // Init
+    renderTokens();
+  </script>
+</body>
+</html>
